@@ -21,7 +21,7 @@ void builtin_type(char *buffer, size_t buffer_size) {
     size_t arg_size = buffer_size-5;
 
     for (int i=0; i<builtins_size; i++) {
-        if (strncmp(builtins[i], arg, arg_size) == 0) {
+        if (strcmp(builtins[i], arg) == 0) {
             printf("%s %s\n", arg, "is a builtin command");
             return;
         }
