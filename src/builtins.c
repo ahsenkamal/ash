@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "builtins.h"
+#include "path_execs.h"
 
 char *builtins[] = {
     "echo",
@@ -31,7 +32,7 @@ void builtin_type(char *args[], size_t args_count) {
         
         if (found) continue;
 
-        char *binary_path = NULL; //find_in_path(args[i]);
+        char *binary_path = find_in_path(args[i]);
         if (binary_path != NULL) {
             printf("%s is %s\n", args[i], binary_path); 
             continue;

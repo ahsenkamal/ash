@@ -1,30 +1,33 @@
 #include <stdio.h>
 #include <string.h>
 #include "builtins.h"
+#include "path_execs.h"
 
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
 
-size_t read_input(char *buffer, size_t buffer_size) {
+void read_input(char *buffer, size_t buffer_size) {
     fgets(buffer, buffer_size, stdin);
     buffer[strcspn(buffer, "\n")] = 0;
-    return strlen(buffer);
 }
 
 int main() {
     int exit_status = 0;
+    if (read_path() != 0) return 1;
 
     while (exit_status == 0) {
         char buffer[INPUT_BUFFER_SIZE];
         memset(buffer, 0, INPUT_BUFFER_SIZE);
         
         printf("$ ");
-        size_t input_size = read_input(buffer, INPUT_BUFFER_SIZE);
+        read_input(buffer, INPUT_BUFFER_SIZE);
 
         char *args[ARG_MAX] = {NULL};
         
         int args_count = 0;
-        char *arg = strtok(buffer, " ");;
+        char *arg = strtok(buffer, " ");
+        
+        if (arg == NULL) continue;
 
         while (arg != NULL) {
             if (args_count == ARG_MAX) {
