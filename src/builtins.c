@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include "builtins.h"
@@ -35,6 +36,7 @@ void builtin_type(char *args[], size_t args_count) {
         char *binary_path = find_in_path(args[i]);
         if (binary_path != NULL) {
             printf("%s is %s\n", args[i], binary_path); 
+            free(binary_path);
             continue;
         }
 

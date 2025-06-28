@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "builtins.h"
-#include "path_execs.h"
 
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
@@ -13,7 +12,6 @@ void read_input(char *buffer, size_t buffer_size) {
 
 int main() {
     int exit_status = 0;
-    if (read_path() != 0) return 1;
 
     while (exit_status == 0) {
         char buffer[INPUT_BUFFER_SIZE];
