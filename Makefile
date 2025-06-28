@@ -17,6 +17,7 @@ all: $(TARGET)
 # Link object files into final executable
 $(TARGET): $(OBJ_FILES)
 	$(CC) $(OBJ_FILES) -o $@
+	rm -f $(BUILD_DIR)/*.o
 
 # Compile .c files to .o files in build/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
