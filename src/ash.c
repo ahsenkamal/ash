@@ -1,23 +1,34 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "builtins.h"
+#include "path_execs.h"
+#include "globals.h"
 
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
+
+char cwd[512];
 
 void read_input(char *buffer, size_t buffer_size) {
     fgets(buffer, buffer_size, stdin);
     buffer[strcspn(buffer, "\n")] = 0;
 }
 
-int main() {
-    int exit_status = 0;
+void run_command(char *args[], size_t args_count) {
+    if (run_builtin(args, args_count) != 0 && run_executable(args, args_count) != 0) {
+        printf("%s: %s\n", args[0], "invalid command or arguments");
+    }
+}
 
-    while (exit_status == 0) {
+int main() {
+    if (getcwd(cwd, sizeof(cwd)) == NULL) return 1;
+
+    while (1) {
         char buffer[INPUT_BUFFER_SIZE];
         memset(buffer, 0, INPUT_BUFFER_SIZE);
         
-        printf("$ ");
+        printf("(%s) $ ", cwd);
         read_input(buffer, INPUT_BUFFER_SIZE);
 
         char *args[ARG_MAX] = {NULL};
@@ -28,7 +39,7 @@ int main() {
         if (arg == NULL) continue;
 
         while (arg != NULL) {
-            if (args_count == ARG_MAX) {
+            if (args_count == ARG_MAX-1) {
                 printf("Error: Too many arguments!\n");
                 return 1;
             }
@@ -36,15 +47,7 @@ int main() {
             arg = strtok(NULL, " ");
         }
 
-        if (strcmp(args[0], "echo") == 0) {
-            builtin_echo(args, args_count);
-        } else if (strcmp(args[0], "type") == 0) {
-            builtin_type(args, args_count);
-        } else if (strcmp(buffer, "exit") == 0) {
-            exit_status = 1;
-        } else {
-            printf("%s: %s\n", buffer, "invalid command or arguments");
-        }
+        run_command(args, args_count);
     }
 
     return 0;
