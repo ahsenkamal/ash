@@ -8,7 +8,7 @@
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
 
-char cwd[512];
+char cwd[2048];
 
 void read_input(char *buffer, size_t buffer_size) {
     fgets(buffer, buffer_size, stdin);
