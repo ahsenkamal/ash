@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include "path_execs.h"
 
@@ -11,10 +12,17 @@
 int run_executable(char *args[], size_t args_count, int fd) {
     pid_t pid = fork();
     if (pid == 0) {
+        setpgid(0, 0);
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGTTOU, SIG_DFL);
+        signal(SIGTTIN, SIG_DFL);
         dup2(fd, STDOUT_FILENO);
         execvp(args[0], args);
         exit(127);
     } else if (pid > 0) {
+        tcsetpgrp(STDIN_FILENO, pid);
+
         int status;
         wait(&status);
         
@@ -22,6 +30,7 @@ int run_executable(char *args[], size_t args_count, int fd) {
             return 1;
         }
 
+        tcsetpgrp(STDIN_FILENO, getpgrp());
         return 0;
     } else {
         return 1;

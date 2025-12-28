@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "builtins.h"
 #include "path_execs.h"
 #include "globals.h"
@@ -22,12 +23,22 @@ void run_command(char *args[], size_t args_count, int fd) {
     }
 }
 
-void handle_pipe(char *arg) {
+void init_shell() {
+    pid_t shell_pid = getpid();
 
+    setpgid(shell_pid, shell_pid);
+
+    tcsetpgrp(STDIN_FILENO, shell_pid);
+
+    signal(SIGINT, SIG_IGN);
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
 }
 
 int main() {
     if (getcwd(cwd, sizeof(cwd)) == NULL) return 1;
+    init_shell();
 
     while (1) {
         char buffer[INPUT_BUFFER_SIZE];
