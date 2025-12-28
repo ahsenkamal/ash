@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include "path_execs.h"
+#include "jobs.h"
 
 // todo: implement cache
 
@@ -21,13 +22,16 @@ int run_executable(char *args[], size_t args_count, int fd) {
         execvp(args[0], args);
         exit(127);
     } else if (pid > 0) {
+        setpgid(pid, pid);
         tcsetpgrp(STDIN_FILENO, pid);
 
         int status;
-        wait(&status);
+        waitpid(-pid, &status, WUNTRACED);
         
         if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
             return 1;
+        } else if (WIFSTOPPED(status)) {
+            add_job(pid, STOPPED, args[0]);
         }
 
         tcsetpgrp(STDIN_FILENO, getpgrp());

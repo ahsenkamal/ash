@@ -7,6 +7,7 @@
 #include "builtins.h"
 #include "path_execs.h"
 #include "globals.h"
+#include "jobs.h"
 
 char *builtins[] = {
     "exit",
@@ -27,6 +28,8 @@ int run_builtin(char *args[], size_t args_count, int fd) {
         builtin_pwd(args_count, fd);
     } else if (strcmp(args[0], "cd") == 0) {
         builtin_cd(args, args_count);
+    } else if (strcmp(args[0], "jobs") == 0) {
+        builtin_jobs(args, args_count);
     } else {
         return 1;
     }
@@ -144,3 +147,7 @@ void builtin_cd(char *args[], size_t args_count) {
         strncpy(cwd, final_path, sizeof(cwd) - 1); 
     }
 }
+
+void builtin_jobs(char *args[], size_t args_count) {
+    list_jobs();
+} 

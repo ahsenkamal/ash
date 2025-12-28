@@ -6,6 +6,7 @@
 #include "builtins.h"
 #include "path_execs.h"
 #include "globals.h"
+#include "jobs.h"
 
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
