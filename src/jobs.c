@@ -22,7 +22,7 @@ static int find_free_slot(void) {
     return -1;
 }
 
-job* add_job(pid_t pid, job_state state, char *command) {
+job* add_job(pid_t pid, job_state state, char **args) {
     int idx = find_free_slot();
     if (idx < 0)
         return NULL;
@@ -31,9 +31,8 @@ job* add_job(pid_t pid, job_state state, char *command) {
     j->job_id = next_job_id;
     j->pgid = pid;
     j->state = state;
-
-    strncpy(j->command, command, sizeof(j->command) - 1);
-    j->command[sizeof(j->command) - 1] = '\0';
+    char *command = get_command(args);
+    strncpy(j->command, command, sizeof(j->command)-1);
 
     jobs[idx] = j;
     next_job_id++;
@@ -50,6 +49,34 @@ void delete_job(pid_t pgid) {
     }
 }
 
+char *get_command(char **args) {
+    size_t len = 0;
+
+    for (int i = 0; args[i]; i++) {
+        len += strlen(args[i]);
+        if (args[i + 1])
+            len += 1;
+    }
+
+    char *cmd = malloc(len + 1);
+    if (!cmd)
+        return NULL;
+
+    char *p = cmd;
+
+    for (int i = 0; args[i]; i++) {
+        size_t l = strlen(args[i]);
+        memcpy(p, args[i], l);
+        p += l;
+
+        if (args[i + 1])
+            *p++ = ' ';
+    }
+
+    *p = '\0';
+    return cmd;
+}
+
 void list_jobs(void) {
     for (int i = 0; i < MAX_JOBS; i++) {
         if (jobs[i] == NULL)
@@ -63,4 +90,26 @@ void list_jobs(void) {
                state,
                jobs[i]->command);
     }
+}
+
+int count_jobs() {
+    int count = 0;
+    for (int i=0; i<MAX_JOBS; i++) {
+        if (jobs[i]==NULL) {
+            continue;
+        }
+        count++;
+    }
+    return count;
+}
+
+job *find_job_by_id(int id) {
+    for (int i=0; i<MAX_JOBS; i++) {
+        if (jobs[i]==NULL) {
+            continue;
+        } else if (jobs[i]->job_id == id) {
+            return jobs[i];
+        }
+    }
+    return NULL;
 }

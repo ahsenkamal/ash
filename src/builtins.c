@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include "builtins.h"
 #include "path_execs.h"
 #include "globals.h"
@@ -30,6 +32,10 @@ int run_builtin(char *args[], size_t args_count, int fd) {
         builtin_cd(args, args_count);
     } else if (strcmp(args[0], "jobs") == 0) {
         builtin_jobs(args, args_count);
+    } else if (strcmp(args[0], "bg") == 0) {
+        builtin_bg(args, args_count);
+    } else if (strcmp(args[0], "fg") == 0) {
+        builtin_fg(args, args_count);
     } else {
         return 1;
     }
@@ -151,3 +157,44 @@ void builtin_cd(char *args[], size_t args_count) {
 void builtin_jobs(char *args[], size_t args_count) {
     list_jobs();
 } 
+
+void builtin_bg(char *args[], size_t args_count) {
+    int job_no = atoi(args[1]);
+
+    job *j = find_job_by_id(job_no);
+    if (!j) {
+        fprintf(stderr, "bg: job not found\n");
+        return;
+    }
+
+    if (j->state == RUNNING) return; 
+
+    kill(-j->pgid, SIGCONT);
+    j->state = RUNNING;
+}
+
+void builtin_fg(char *args[], size_t args_count) {
+    int job_no = atoi(args[1]);
+
+    job *j = find_job_by_id(job_no);
+    if (!j) {
+        fprintf(stderr, "fg: job not found\n");
+        return;
+    }
+
+    tcsetpgrp(STDIN_FILENO, j->pgid);
+
+    kill(-j->pgid, SIGCONT);
+    j->state = RUNNING;
+
+    int status;
+    waitpid(-j->pgid, &status, WUNTRACED);
+
+    if (WIFSTOPPED(status)) {
+        j->state = STOPPED;
+    } else {
+        delete_job(j->pgid);
+    }
+
+    tcsetpgrp(STDIN_FILENO, getpgrp());
+}

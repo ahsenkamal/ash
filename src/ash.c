@@ -7,19 +7,21 @@
 #include "path_execs.h"
 #include "globals.h"
 #include "jobs.h"
+#include <stdbool.h>
 
 #define INPUT_BUFFER_SIZE 1024
 #define ARG_MAX 100
 
 char cwd[2048];
+bool background = false;
 
 void read_input(char *buffer, size_t buffer_size) {
     fgets(buffer, buffer_size, stdin);
     buffer[strcspn(buffer, "\n")] = 0;
 }
 
-void run_command(char *args[], size_t args_count, int fd) {
-    if (run_builtin(args, args_count, fd) != 0 && run_executable(args, args_count, fd) != 0) {
+void run_command(char *args[], size_t args_count, int fd, bool background) {
+    if (run_builtin(args, args_count, fd) != 0 && run_executable(args, args_count, fd, background) != 0) {
         printf("%s: %s\n", args[0], "invalid command or arguments");
     }
 }
@@ -49,7 +51,7 @@ int main() {
         int pipefd[2];
         pipe(pipefd);
         
-        printf("(%s) $ ", cwd);
+        printf("(%s) (%d) $ ", cwd, count_jobs());
         read_input(buffer, INPUT_BUFFER_SIZE);
 
         char *args[ARG_MAX] = {NULL};
@@ -64,8 +66,11 @@ int main() {
                 printf("Error: Too many arguments!\n");
                 return 1;
             }
-            
-            if (strcmp(arg, ">") == 0) {
+            if (strcmp(arg, "&") == 0) {
+                arg = strtok(NULL, " ");
+                background = true;
+                break;
+            } else if (strcmp(arg, ">") == 0) {
                 arg = strtok(NULL, " ");
                 fd = open(arg, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
@@ -92,10 +97,11 @@ int main() {
             arg = strtok(NULL, " ");
         }
 
-        run_command(args, args_count, fd);
+        run_command(args, args_count, fd, background);
         dup2(saved_stdout, STDOUT_FILENO);
         close(pipefd[0]);
         close(pipefd[1]);
+        background = false;
     }
 
     return 0;
