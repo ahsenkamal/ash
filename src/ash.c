@@ -22,14 +22,20 @@ void run_command(char *args[], size_t args_count, int fd) {
     }
 }
 
+void handle_pipe(char *arg) {
+
+}
+
 int main() {
     if (getcwd(cwd, sizeof(cwd)) == NULL) return 1;
 
     while (1) {
         char buffer[INPUT_BUFFER_SIZE];
         memset(buffer, 0, INPUT_BUFFER_SIZE);
-        dup2(1, STDOUT_FILENO);
+        int saved_stdout = dup(STDOUT_FILENO);
         int fd = STDOUT_FILENO;
+        int pipefd[2];
+        pipe(pipefd);
         
         printf("(%s) $ ", cwd);
         read_input(buffer, INPUT_BUFFER_SIZE);
@@ -55,6 +61,19 @@ int main() {
                     printf("Error opening file %s", arg);
                 }
                 break;
+            } else if (strcmp(arg, "|") == 0) {
+                arg = strtok(NULL, " ");
+
+                pid_t p1 = fork();
+                if (p1 == 0) {
+                    dup2(pipefd[0], STDIN_FILENO);
+                    args_count = 0;
+                    memset(args, 0, sizeof(args));
+                } else {
+                    dup2(pipefd[1], STDOUT_FILENO);
+                    fd = pipefd[1];
+                    break;
+                }
             }
 
             args[args_count++] = arg;
@@ -62,7 +81,9 @@ int main() {
         }
 
         run_command(args, args_count, fd);
-        if (fd != 1) close(fd);
+        dup2(saved_stdout, STDOUT_FILENO);
+        close(pipefd[0]);
+        close(pipefd[1]);
     }
 
     return 0;
