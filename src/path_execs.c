@@ -8,9 +8,10 @@
 
 // todo: implement cache
 
-int run_executable(char *args[], size_t args_count) {
+int run_executable(char *args[], size_t args_count, int fd) {
     pid_t pid = fork();
     if (pid == 0) {
+        dup2(fd, STDOUT_FILENO);
         execvp(args[0], args);
         exit(127);
     } else if (pid > 0) {

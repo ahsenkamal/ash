@@ -16,15 +16,15 @@ char *builtins[] = {
     "cd"
 };
 
-int run_builtin(char *args[], size_t args_count) {
+int run_builtin(char *args[], size_t args_count, int fd) {
     if (strcmp(args[0], "exit") == 0) {
         exit(0);
     } else if (strcmp(args[0], "echo") == 0) {
-        builtin_echo(args, args_count);
+        builtin_echo(args, args_count, fd);
     } else if (strcmp(args[0], "type") == 0) {
-        builtin_type(args, args_count);
+        builtin_type(args, args_count, fd);
     } else if (strcmp(args[0], "pwd") == 0) {
-        builtin_pwd(args_count);
+        builtin_pwd(args_count, fd);
     } else if (strcmp(args[0], "cd") == 0) {
         builtin_cd(args, args_count);
     } else {
@@ -34,14 +34,14 @@ int run_builtin(char *args[], size_t args_count) {
     return 0;
 }
 
-void builtin_echo(char *args[], size_t args_count) {
+void builtin_echo(char *args[], size_t args_count, int fd) {
     for (int i=1; i<args_count; i++) {
-        printf("%s ", args[i]);
+        dprintf(fd, "%s ", args[i]);
     }
-    printf("\n");
+    dprintf(fd, "\n");
 }
 
-void builtin_type(char *args[], size_t args_count) {
+void builtin_type(char *args[], size_t args_count, int fd) {
     size_t builtins_size = sizeof(builtins)/sizeof(char *);
 
     for (int i=1; i<args_count; i++) {
@@ -49,7 +49,7 @@ void builtin_type(char *args[], size_t args_count) {
 
         for (int j=0; j<builtins_size; j++) {
             if (strcmp(args[i], builtins[j]) == 0) {
-                printf("%s is a builtin command\n", args[i]);
+                dprintf(fd, "%s is a builtin command\n", args[i]);
                 found = true;
             }
         }
@@ -58,22 +58,22 @@ void builtin_type(char *args[], size_t args_count) {
 
         char *binary_path = find_in_path(args[i]);
         if (binary_path != NULL) {
-            printf("%s is %s\n", args[i], binary_path); 
+            dprintf(fd, "%s is %s\n", args[i], binary_path); 
             free(binary_path);
             continue;
         }
 
-        printf("%s %s\n", args[i], "is uknown");
+        dprintf(fd, "%s %s\n", args[i], "is uknown");
     }
 }
 
-void builtin_pwd(size_t args_count) {
+void builtin_pwd(size_t args_count, int fd) {
     if (args_count > 1) {
-        printf("pwd: too many arguments\n");
+        dprintf(fd, "pwd: too many arguments\n");
         return;
     }
 
-    printf("%s\n", cwd);
+    dprintf(fd, "%s\n", cwd);
 }
 
 void builtin_cd(char *args[], size_t args_count) {
